@@ -18,7 +18,7 @@ export function AppShell() {
           <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2">
               <SplitSquareVertical className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-sm">BillSplit</span>
+              <span className="font-semibold text-sm">Chill Bill</span>
             </div>
             <ThemeToggle />
           </div>

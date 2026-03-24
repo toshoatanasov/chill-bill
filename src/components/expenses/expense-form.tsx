@@ -117,7 +117,11 @@ export function ExpenseForm({ participants, editingExpense, onSubmit, onCancel }
         <Label>Paid by</Label>
         <Select value={paidById} onValueChange={(v) => setPaidById(v ?? '')}>
           <SelectTrigger>
-            <SelectValue placeholder="Select who paid" />
+            <SelectValue placeholder="Select who paid">
+              {paidById
+                ? (participants.find((p) => p.id === paidById)?.name ?? 'Select who paid')
+                : 'Select who paid'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {participants.map((p) => (
