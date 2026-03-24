@@ -12,4 +12,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.ts',
+    coverage: {
+      provider: 'v8',
+      include: ['src/**'],
+      exclude: ['src/components/ui/**', 'src/main.tsx', 'src/App.tsx'],
+      thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
+    },
+  },
 })

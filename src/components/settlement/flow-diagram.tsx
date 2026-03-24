@@ -185,7 +185,7 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
         ctx.stroke()
 
         const name = getName(id)
-        const label = name.length > 10 ? name.slice(0, 9) + '…' : name
+        const label = name.length > 10 ? name.slice(0, 10) + '…' : name
         ctx.fillStyle = foreground
         ctx.font = '500 12px system-ui, sans-serif'
         ctx.textAlign = 'center'
@@ -204,7 +204,7 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
         ctx.stroke()
 
         const name = getName(id)
-        const label = name.length > 10 ? name.slice(0, 9) + '…' : name
+        const label = name.length > 10 ? name.slice(0, 10) + '…' : name
         ctx.fillStyle = primary
         ctx.font = '600 12px system-ui, sans-serif'
         ctx.textAlign = 'center'
@@ -234,6 +234,7 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
         <div className="overflow-x-auto">
           <svg
             ref={ref}
+            role="img"
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
             width="100%"
             style={{ maxWidth: svgWidth, minWidth: 240 }}
@@ -329,7 +330,7 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
                     className="fill-foreground"
                     style={{ fontSize: 12, fontWeight: 500, fontFamily: 'inherit' }}
                   >
-                    {getName(id).length > 10 ? getName(id).slice(0, 9) + '…' : getName(id)}
+                    {getName(id).length > 10 ? getName(id).slice(0, 10) + '…' : getName(id)}
                   </text>
                 </g>
               )
@@ -357,7 +358,7 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
                     className="fill-primary"
                     style={{ fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }}
                   >
-                    {getName(id).length > 10 ? getName(id).slice(0, 9) + '…' : getName(id)}
+                    {getName(id).length > 10 ? getName(id).slice(0, 10) + '…' : getName(id)}
                   </text>
                 </g>
               )
