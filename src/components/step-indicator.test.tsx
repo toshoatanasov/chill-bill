@@ -23,7 +23,7 @@ describe('StepIndicator', () => {
     it('active step label has foreground text class', () => {
       render(<StepIndicator currentStep={0} />)
       const label = screen.getByText('Participants')
-      expect(label).toHaveClass('text-foreground')
+      expect(label).toHaveClass('text-gradient')
     })
 
     it('inactive step labels have muted-foreground class', () => {
@@ -36,7 +36,7 @@ describe('StepIndicator', () => {
   describe('step 1 active', () => {
     it('step 2 label has foreground text class', () => {
       render(<StepIndicator currentStep={1} />)
-      expect(screen.getByText('Expenses')).toHaveClass('text-foreground')
+      expect(screen.getByText('Expenses')).toHaveClass('text-gradient')
     })
 
     it('step 1 and 3 labels have muted-foreground class', () => {
@@ -49,7 +49,7 @@ describe('StepIndicator', () => {
   describe('step 2 active', () => {
     it('step 3 label has foreground text class', () => {
       render(<StepIndicator currentStep={2} />)
-      expect(screen.getByText('Settlement')).toHaveClass('text-foreground')
+      expect(screen.getByText('Settlement')).toHaveClass('text-gradient')
     })
 
     it('steps 1 and 2 labels have muted-foreground class', () => {

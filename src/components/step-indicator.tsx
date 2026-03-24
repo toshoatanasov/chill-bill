@@ -15,8 +15,8 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
             <div
               className={cn(
                 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors',
-                index < currentStep && 'bg-primary text-primary-foreground',
-                index === currentStep && 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background',
+                index < currentStep && 'bg-gradient-to-br from-[#863bff] to-[#47bfff] text-white',
+                index === currentStep && 'btn-shimmer text-white ring-2 ring-purple-400/40 ring-offset-2 ring-offset-background scale-110 step-glow',
                 index > currentStep && 'bg-muted text-muted-foreground',
               )}
             >
@@ -25,19 +25,18 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
             <span
               className={cn(
                 'text-xs font-medium',
-                index === currentStep ? 'text-foreground' : 'text-muted-foreground',
+                index === currentStep ? 'font-semibold text-gradient' : 'text-muted-foreground',
               )}
             >
               {label}
             </span>
           </div>
           {index < STEPS.length - 1 && (
-            <div
-              className={cn(
-                'mx-2 mb-5 h-px w-12 transition-colors sm:w-20',
-                index < currentStep ? 'bg-primary' : 'bg-border',
+            <div className="relative mx-2 mb-5 h-0.5 w-12 overflow-hidden rounded-full bg-border sm:w-20">
+              {index < currentStep && (
+                <div className="absolute inset-0 origin-left bg-gradient-to-r from-[#863bff] to-[#47bfff] animate-[connector-fill_0.5s_ease-out_forwards]" />
               )}
-            />
+            </div>
           )}
         </div>
       ))}

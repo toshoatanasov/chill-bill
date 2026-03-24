@@ -59,16 +59,16 @@ export function SettlementStep({ state, dispatch }: SettlementStepProps) {
         <CardContent className="space-y-6">
           {/* Summary */}
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-md border p-3">
-              <div className="text-lg font-bold">{participants.length}</div>
+            <div className="stat-box p-3">
+              <div className="text-lg font-bold text-gradient">{participants.length}</div>
               <div className="text-xs text-muted-foreground">People</div>
             </div>
-            <div className="rounded-md border p-3">
-              <div className="text-lg font-bold">{expenses.length}</div>
+            <div className="stat-box p-3">
+              <div className="text-lg font-bold text-gradient">{expenses.length}</div>
               <div className="text-xs text-muted-foreground">Expenses</div>
             </div>
-            <div className="rounded-md border p-3">
-              <div className="text-lg font-bold">{formatCurrency(totalExpenses, currencySymbol)}</div>
+            <div className="stat-box p-3">
+              <div className="text-lg font-bold text-gradient">{formatCurrency(totalExpenses, currencySymbol)}</div>
               <div className="text-xs text-muted-foreground">Total</div>
             </div>
           </div>
