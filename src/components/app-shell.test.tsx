@@ -41,7 +41,7 @@ describe('AppShell', () => {
       lineTo: vi.fn(), bezierCurveTo: vi.fn(), stroke: vi.fn(), fill: vi.fn(),
       scale: vi.fn(), closePath: vi.fn(), quadraticCurveTo: vi.fn(),
       getImageData: vi.fn(() => ({ data: new Uint8ClampedArray([128, 128, 128, 255]) })),
-    }) as unknown as CanvasRenderingContext2D)
+    })) as unknown as typeof HTMLCanvasElement.prototype.getContext
     HTMLCanvasElement.prototype.toBlob = vi.fn()
     Object.defineProperty(window, 'getComputedStyle', {
       value: vi.fn(() => ({ getPropertyValue: vi.fn(() => '0.2 0 0') })),

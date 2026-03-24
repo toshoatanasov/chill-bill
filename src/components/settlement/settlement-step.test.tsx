@@ -12,7 +12,7 @@ beforeEach(() => {
     lineTo: vi.fn(), bezierCurveTo: vi.fn(), stroke: vi.fn(), fill: vi.fn(),
     scale: vi.fn(), closePath: vi.fn(), quadraticCurveTo: vi.fn(),
     getImageData: vi.fn(() => ({ data: new Uint8ClampedArray([128, 128, 128, 255]) })),
-  }) as unknown as CanvasRenderingContext2D)
+  })) as unknown as typeof HTMLCanvasElement.prototype.getContext
   HTMLCanvasElement.prototype.toBlob = vi.fn()
   Object.defineProperty(window, 'getComputedStyle', {
     value: vi.fn(() => ({ getPropertyValue: vi.fn(() => '0.2 0 0') })),
@@ -129,7 +129,7 @@ describe('SettlementStep', () => {
   describe('navigation', () => {
     it('dispatches SET_STEP 1 on Back click', async () => {
       const user = userEvent.setup()
-      const dispatch = vi.fn<[AppAction], void>()
+      const dispatch = vi.fn<(a: AppAction) => void>()
       render(<SettlementStep state={makeState()} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /back/i }))
       expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 1 })
@@ -154,7 +154,7 @@ describe('SettlementStep', () => {
 
     it('dispatches RESET when confirmed', async () => {
       const user = userEvent.setup()
-      const dispatch = vi.fn<[AppAction], void>()
+      const dispatch = vi.fn<(a: AppAction) => void>()
       render(<SettlementStep state={makeState()} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /start new/i }))
       await user.click(screen.getByRole('button', { name: /yes, start new/i }))

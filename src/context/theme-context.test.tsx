@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, act } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider, useThemeContext } from './theme-context'
 
@@ -59,7 +59,7 @@ describe('ThemeProvider', () => {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      }))
+      })) as unknown as typeof window.matchMedia
       renderWithProvider()
       expect(screen.getByTestId('resolved').textContent).toBe('dark')
     })
@@ -72,7 +72,7 @@ describe('ThemeProvider', () => {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      }))
+      })) as unknown as typeof window.matchMedia
       renderWithProvider()
       expect(screen.getByTestId('resolved').textContent).toBe('dark')
     })
@@ -117,7 +117,7 @@ describe('ThemeProvider', () => {
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      }))
+      })) as unknown as typeof window.matchMedia
       renderWithProvider()
       expect(document.documentElement.classList.contains('dark')).toBe(true)
     })

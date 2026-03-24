@@ -19,11 +19,6 @@ const editingExpense: Expense = {
   splitDetails: [],
 }
 
-async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText(/description/i), 'Gift')
-  await user.type(screen.getByLabelText(/amount/i), '100')
-}
-
 describe('ExpenseForm', () => {
   describe('add mode (no editingExpense)', () => {
     it('renders description and amount inputs', () => {

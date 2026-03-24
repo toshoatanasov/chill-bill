@@ -45,7 +45,7 @@ describe('ExpenseStep', () => {
   describe('navigation', () => {
     it('dispatches SET_STEP 0 on Back click', async () => {
       const user = userEvent.setup()
-      const dispatch = vi.fn<[AppAction], void>()
+      const dispatch = vi.fn<(a: AppAction) => void>()
       render(<ExpenseStep state={makeState()} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /back/i }))
       expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 0 })
@@ -53,7 +53,7 @@ describe('ExpenseStep', () => {
 
     it('dispatches SET_STEP 2 on Calculate Settlement click', async () => {
       const user = userEvent.setup()
-      const dispatch = vi.fn<[AppAction], void>()
+      const dispatch = vi.fn<(a: AppAction) => void>()
       render(<ExpenseStep state={makeState(1)} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /calculate settlement/i }))
       expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 2 })

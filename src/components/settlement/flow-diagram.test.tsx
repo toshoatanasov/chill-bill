@@ -36,7 +36,7 @@ const mockCtx = {
 }
 
 beforeAll(() => {
-  HTMLCanvasElement.prototype.getContext = vi.fn(() => mockCtx as unknown as CanvasRenderingContext2D)
+  HTMLCanvasElement.prototype.getContext = vi.fn(() => mockCtx) as unknown as typeof HTMLCanvasElement.prototype.getContext
   HTMLCanvasElement.prototype.toBlob = vi.fn((cb) => cb(new Blob([''], { type: 'image/png' })))
   Object.defineProperty(window, 'getComputedStyle', {
     value: vi.fn(() => ({

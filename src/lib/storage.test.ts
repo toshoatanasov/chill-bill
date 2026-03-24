@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { loadState, saveState, clearState, loadTheme, saveTheme } from './storage'
 import type { AppState } from '@/types'
 

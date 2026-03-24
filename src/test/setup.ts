@@ -33,11 +33,11 @@ Object.defineProperty(window, 'matchMedia', {
   value: vi.fn((query: string) => ({
     matches: false,
     media: query,
-    addEventListener: vi.fn((event: string, listener: EventListenerOrEventListenerObject) => {
+    addEventListener: vi.fn((_: string, listener: EventListenerOrEventListenerObject) => {
       if (!mediaQueryListeners.has(query)) mediaQueryListeners.set(query, new Set())
       mediaQueryListeners.get(query)!.add(listener)
     }),
-    removeEventListener: vi.fn((event: string, listener: EventListenerOrEventListenerObject) => {
+    removeEventListener: vi.fn((_: string, listener: EventListenerOrEventListenerObject) => {
       mediaQueryListeners.get(query)?.delete(listener)
     }),
     dispatchEvent: vi.fn(),
