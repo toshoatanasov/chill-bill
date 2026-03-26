@@ -6,7 +6,7 @@ const mockState: AppState = {
   participants: [{ id: '1', name: 'Alice' }],
   expenses: [],
   currencySymbol: '€',
-  currentStep: 0,
+  currentStep: 'participants',
 }
 
 describe('loadState', () => {
@@ -21,6 +21,21 @@ describe('loadState', () => {
 
   it('returns null when stored JSON is malformed', () => {
     localStorage.setItem('bill-split-state', '{invalid json}')
+    expect(loadState()).toBeNull()
+  })
+
+  it('returns null when stored state has invalid shape', () => {
+    localStorage.setItem('bill-split-state', JSON.stringify({ foo: 'bar' }))
+    expect(loadState()).toBeNull()
+  })
+
+  it('returns null when currentStep is an invalid value', () => {
+    localStorage.setItem('bill-split-state', JSON.stringify({ ...mockState, currentStep: 'invalid' }))
+    expect(loadState()).toBeNull()
+  })
+
+  it('returns null when currentStep is a number (legacy format)', () => {
+    localStorage.setItem('bill-split-state', JSON.stringify({ ...mockState, currentStep: 0 }))
     expect(loadState()).toBeNull()
   })
 })

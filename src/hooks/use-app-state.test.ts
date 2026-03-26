@@ -7,14 +7,14 @@ const DEFAULT_STATE: AppState = {
   participants: [],
   expenses: [],
   currencySymbol: '€',
-  currentStep: 0,
+  currentStep: 'participants',
 }
 
 const savedState: AppState = {
   participants: [{ id: 'p1', name: 'Alice' }],
   expenses: [],
   currencySymbol: '€',
-  currentStep: 1,
+  currentStep: 'expenses',
 }
 
 describe('useAppState', () => {
@@ -176,8 +176,8 @@ describe('useAppState', () => {
   describe('SET_STEP', () => {
     it('updates currentStep', () => {
       const { result } = renderHook(() => useAppState())
-      act(() => result.current.dispatch({ type: 'SET_STEP', step: 2 }))
-      expect(result.current.state.currentStep).toBe(2)
+      act(() => result.current.dispatch({ type: 'SET_STEP', step: 'settlement' }))
+      expect(result.current.state.currentStep).toBe('settlement')
     })
   })
 

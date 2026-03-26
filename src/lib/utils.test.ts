@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { cn, formatCurrency } from './utils'
+import { cn, formatCurrency, getParticipantName } from './utils'
+import type { Participant } from '@/types'
 
 describe('formatCurrency', () => {
   it('formats a whole number', () => {
@@ -38,5 +39,24 @@ describe('cn', () => {
 
   it('handles conditional object syntax', () => {
     expect(cn({ 'text-red-500': true, 'text-blue-500': false })).toBe('text-red-500')
+  })
+})
+
+describe('getParticipantName', () => {
+  const participants: Participant[] = [
+    { id: 'p1', name: 'Alice' },
+    { id: 'p2', name: 'Bob' },
+  ]
+
+  it('returns participant name when found', () => {
+    expect(getParticipantName(participants, 'p1')).toBe('Alice')
+  })
+
+  it('returns "Unknown" when participant not found', () => {
+    expect(getParticipantName(participants, 'p99')).toBe('Unknown')
+  })
+
+  it('returns "Unknown" for empty participants list', () => {
+    expect(getParticipantName([], 'p1')).toBe('Unknown')
   })
 })

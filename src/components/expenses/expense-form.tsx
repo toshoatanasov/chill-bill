@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useReducer } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,65 +24,106 @@ function getDefaultSplitDetails(participants: Participant[], mode: SplitMode): S
   return participants.map((p) => ({ participantId: p.id, value: 0 }))
 }
 
-export function ExpenseForm({ participants, editingExpense, onSubmit, onCancel }: ExpenseFormProps) {
-  const [description, setDescription] = useState(editingExpense?.description ?? '')
-  const [amount, setAmount] = useState(editingExpense?.amount?.toString() ?? '')
-  const [paidById, setPaidById] = useState(editingExpense?.paidById ?? '')
-  const [splitMode, setSplitMode] = useState<SplitMode>(editingExpense?.splitMode ?? 'equal')
-  const [splitAmong, setSplitAmong] = useState<string[]>(
-    editingExpense?.splitAmong ?? participants.map((p) => p.id),
-  )
-  const [splitDetails, setSplitDetails] = useState<SplitDetail[]>(
-    editingExpense?.splitDetails ?? getDefaultSplitDetails(participants, editingExpense?.splitMode ?? 'equal'),
-  )
-  const [errors, setErrors] = useState<string[]>([])
+interface FormState {
+  description: string
+  amount: string
+  paidById: string
+  splitMode: SplitMode
+  splitAmong: string[]
+  splitDetails: SplitDetail[]
+  errors: string[]
+}
 
-  // Reset split details when mode changes
-  useEffect(() => {
-    if (splitMode !== 'equal') {
-      setSplitDetails(getDefaultSplitDetails(participants, splitMode))
-    }
-  }, [splitMode, participants])
+type FormAction =
+  | { type: 'SET_DESCRIPTION'; value: string }
+  | { type: 'SET_AMOUNT'; value: string }
+  | { type: 'SET_PAID_BY'; value: string }
+  | { type: 'SET_SPLIT_MODE'; mode: SplitMode; participants: Participant[] }
+  | { type: 'SET_SPLIT_AMONG'; ids: string[] }
+  | { type: 'SET_SPLIT_DETAILS'; details: SplitDetail[] }
+  | { type: 'SET_ERRORS'; errors: string[] }
+  | { type: 'RESET'; participants: Participant[] }
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'SET_DESCRIPTION':
+      return { ...state, description: action.value, errors: [] }
+    case 'SET_AMOUNT':
+      return { ...state, amount: action.value, errors: [] }
+    case 'SET_PAID_BY':
+      return { ...state, paidById: action.value, errors: [] }
+    case 'SET_SPLIT_MODE':
+      return {
+        ...state,
+        splitMode: action.mode,
+        splitDetails: action.mode === 'equal' ? [] : getDefaultSplitDetails(action.participants, action.mode),
+        errors: [],
+      }
+    case 'SET_SPLIT_AMONG':
+      return { ...state, splitAmong: action.ids }
+    case 'SET_SPLIT_DETAILS':
+      return { ...state, splitDetails: action.details }
+    case 'SET_ERRORS':
+      return { ...state, errors: action.errors }
+    case 'RESET':
+      return createInitialState(null, action.participants)
+    default:
+      return state
+  }
+}
+
+function createInitialState(editingExpense: Expense | null | undefined, participants: Participant[]): FormState {
+  return {
+    description: editingExpense?.description ?? '',
+    amount: editingExpense?.amount?.toString() ?? '',
+    paidById: editingExpense?.paidById ?? '',
+    splitMode: editingExpense?.splitMode ?? 'equal',
+    splitAmong: editingExpense?.splitAmong ?? participants.map((p) => p.id),
+    splitDetails: editingExpense?.splitDetails ?? getDefaultSplitDetails(participants, editingExpense?.splitMode ?? 'equal'),
+    errors: [],
+  }
+}
+
+export function ExpenseForm({ participants, editingExpense, onSubmit, onCancel }: ExpenseFormProps) {
+  const [form, formDispatch] = useReducer(
+    formReducer,
+    { editingExpense, participants },
+    ({ editingExpense, participants }) => createInitialState(editingExpense, participants),
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const parsedAmount = parseFloat(amount)
+    const parsedAmount = parseFloat(form.amount)
     const expense: Omit<Expense, 'id'> = {
-      description: description.trim(),
+      description: form.description.trim(),
       amount: parsedAmount,
-      paidById,
-      splitMode,
-      splitAmong,
-      splitDetails: splitMode === 'equal' ? [] : splitDetails.filter((d) => splitAmong.includes(d.participantId)),
+      paidById: form.paidById,
+      splitMode: form.splitMode,
+      splitAmong: form.splitAmong,
+      splitDetails: form.splitMode === 'equal' ? [] : form.splitDetails.filter((d) => form.splitAmong.includes(d.participantId)),
     }
 
     const validationErrors = validateExpense(expense)
     if (validationErrors.length > 0) {
-      setErrors(validationErrors)
+      formDispatch({ type: 'SET_ERRORS', errors: validationErrors })
       return
     }
 
     onSubmit(expense)
 
     if (!editingExpense) {
-      setDescription('')
-      setAmount('')
-      setPaidById('')
-      setSplitMode('equal')
-      setSplitAmong(participants.map((p) => p.id))
-      setSplitDetails(getDefaultSplitDetails(participants, 'equal'))
-      setErrors([])
+      formDispatch({ type: 'RESET', participants })
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {errors.length > 0 && (
+      {form.errors.length > 0 && (
         <Alert variant="destructive">
           <AlertDescription>
             <ul className="list-disc list-inside space-y-1">
-              {errors.map((e, i) => <li key={i}>{e}</li>)}
+              {form.errors.map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           </AlertDescription>
         </Alert>
@@ -94,8 +135,8 @@ export function ExpenseForm({ participants, editingExpense, onSubmit, onCancel }
           <Input
             id="description"
             placeholder="e.g. Birthday gift"
-            value={description}
-            onChange={(e) => { setDescription(e.target.value); setErrors([]) }}
+            value={form.description}
+            onChange={(e) => formDispatch({ type: 'SET_DESCRIPTION', value: e.target.value })}
           />
         </div>
 
@@ -107,19 +148,19 @@ export function ExpenseForm({ participants, editingExpense, onSubmit, onCancel }
             min="0.01"
             step="0.01"
             placeholder="0.00"
-            value={amount}
-            onChange={(e) => { setAmount(e.target.value); setErrors([]) }}
+            value={form.amount}
+            onChange={(e) => formDispatch({ type: 'SET_AMOUNT', value: e.target.value })}
           />
         </div>
       </div>
 
       <div className="space-y-1.5">
         <Label>Paid by</Label>
-        <Select value={paidById} onValueChange={(v) => setPaidById(v ?? '')}>
+        <Select value={form.paidById} onValueChange={(v) => formDispatch({ type: 'SET_PAID_BY', value: v ?? '' })}>
           <SelectTrigger>
             <SelectValue placeholder="Select who paid">
-              {paidById
-                ? (participants.find((p) => p.id === paidById)?.name ?? 'Select who paid')
+              {form.paidById
+                ? (participants.find((p) => p.id === form.paidById)?.name ?? 'Select who paid')
                 : 'Select who paid'}
             </SelectValue>
           </SelectTrigger>
@@ -133,7 +174,7 @@ export function ExpenseForm({ participants, editingExpense, onSubmit, onCancel }
 
       <div className="space-y-1.5">
         <Label>Split mode</Label>
-        <Tabs value={splitMode} onValueChange={(v) => setSplitMode(v as SplitMode)}>
+        <Tabs value={form.splitMode} onValueChange={(v) => formDispatch({ type: 'SET_SPLIT_MODE', mode: v as SplitMode, participants })}>
           <TabsList className="w-full">
             <TabsTrigger value="equal" className="flex-1">Equal</TabsTrigger>
             <TabsTrigger value="percentage" className="flex-1">Percentage</TabsTrigger>
@@ -144,12 +185,12 @@ export function ExpenseForm({ participants, editingExpense, onSubmit, onCancel }
 
       <SplitConfig
         participants={participants}
-        splitMode={splitMode}
-        splitAmong={splitAmong}
-        splitDetails={splitDetails}
-        totalAmount={parseFloat(amount) || 0}
-        onSplitAmongChange={setSplitAmong}
-        onSplitDetailsChange={setSplitDetails}
+        splitMode={form.splitMode}
+        splitAmong={form.splitAmong}
+        splitDetails={form.splitDetails}
+        totalAmount={parseFloat(form.amount) || 0}
+        onSplitAmongChange={(ids) => formDispatch({ type: 'SET_SPLIT_AMONG', ids })}
+        onSplitDetailsChange={(details) => formDispatch({ type: 'SET_SPLIT_DETAILS', details })}
       />
 
       <div className="flex gap-2 justify-end pt-2">

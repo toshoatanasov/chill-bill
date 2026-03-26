@@ -9,7 +9,7 @@ function makeState(participantNames: string[]): AppState {
     participants: participantNames.map((name, i) => ({ id: `p${i}`, name })),
     expenses: [],
     currencySymbol: '€',
-    currentStep: 0,
+    currentStep: 'participants',
   }
 }
 
@@ -56,12 +56,12 @@ describe('ParticipantStep', () => {
   })
 
   describe('Next button click', () => {
-    it('dispatches SET_STEP with step=1', async () => {
+    it('dispatches SET_STEP with step=expenses', async () => {
       const user = userEvent.setup()
       const dispatch = vi.fn<(a: AppAction) => void>()
       render(<ParticipantStep state={makeState(['Alice', 'Bob'])} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /next/i }))
-      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 1 })
+      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 'expenses' })
     })
   })
 

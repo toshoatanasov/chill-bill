@@ -44,7 +44,7 @@ export function ParticipantStep({ state, dispatch }: ParticipantStepProps) {
         <Button
           className="w-full"
           disabled={!canProceed}
-          onClick={() => dispatch({ type: 'SET_STEP', step: 1 })}
+          onClick={() => dispatch({ type: 'SET_STEP', step: 'expenses' })}
         >
           Next: Add Expenses
         </Button>

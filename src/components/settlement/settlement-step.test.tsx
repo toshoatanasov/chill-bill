@@ -36,7 +36,7 @@ function makeState(overrides: Partial<AppState> = {}): AppState {
       paidById: 'alice', splitMode: 'equal', splitAmong: ['alice', 'bob'], splitDetails: [],
     }],
     currencySymbol: '€',
-    currentStep: 2,
+    currentStep: 'settlement',
     ...overrides,
   }
 }
@@ -127,12 +127,12 @@ describe('SettlementStep', () => {
   })
 
   describe('navigation', () => {
-    it('dispatches SET_STEP 1 on Back click', async () => {
+    it('dispatches SET_STEP expenses on Back click', async () => {
       const user = userEvent.setup()
       const dispatch = vi.fn<(a: AppAction) => void>()
       render(<SettlementStep state={makeState()} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /back/i }))
-      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 1 })
+      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 'expenses' })
     })
   })
 

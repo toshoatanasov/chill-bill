@@ -1,5 +1,7 @@
 export type SplitMode = 'equal' | 'percentage' | 'exact'
 
+export type Step = 'participants' | 'expenses' | 'settlement'
+
 export interface Participant {
   id: string
   name: string
@@ -30,7 +32,7 @@ export interface AppState {
   participants: Participant[]
   expenses: Expense[]
   currencySymbol: string
-  currentStep: number
+  currentStep: Step
 }
 
 export type AppAction =
@@ -39,6 +41,6 @@ export type AppAction =
   | { type: 'ADD_EXPENSE'; expense: Omit<Expense, 'id'> }
   | { type: 'REMOVE_EXPENSE'; id: string }
   | { type: 'EDIT_EXPENSE'; expense: Expense }
-  | { type: 'SET_STEP'; step: number }
+  | { type: 'SET_STEP'; step: Step }
   | { type: 'SET_CURRENCY_SYMBOL'; symbol: string }
   | { type: 'RESET' }

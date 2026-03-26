@@ -1,6 +1,8 @@
 import { forwardRef, useState } from 'react'
 import { Check, ImageDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { getParticipantName } from '@/lib/utils'
+import { exportDiagramToCanvas } from '@/lib/export-diagram'
 import type { Participant, Transaction } from '@/types'
 
 interface FlowDiagramProps {
@@ -16,24 +18,39 @@ const COL_GAP = 180
 const ROW_GAP = 56
 const PADDING = 20
 
-/** Resolve a CSS custom property value from the document root */
-function resolveCssVar(varName: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+interface DiagramNodeProps {
+  x: number
+  y: number
+  label: string
+  variant: 'debtor' | 'creditor'
 }
 
-/** Convert oklch(...) or any color to hex via canvas */
-function resolveColor(cssColor: string): string {
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = canvas.height = 1
-    const ctx = canvas.getContext('2d')!
-    ctx.fillStyle = cssColor
-    ctx.fillRect(0, 0, 1, 1)
-    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
-    return `rgb(${r},${g},${b})`
-  } catch {
-    return cssColor
-  }
+function DiagramNode({ x, y, label, variant }: DiagramNodeProps) {
+  const truncated = label.length > 10 ? label.slice(0, 10) + '…' : label
+  const isCreditor = variant === 'creditor'
+
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={NODE_WIDTH}
+        height={NODE_HEIGHT}
+        rx={NODE_RADIUS}
+        className={isCreditor ? 'fill-primary/10 stroke-primary' : 'fill-card stroke-border'}
+        strokeWidth="1.5"
+      />
+      <text
+        x={x + NODE_WIDTH / 2}
+        y={y + NODE_HEIGHT / 2 + 4}
+        textAnchor="middle"
+        className={isCreditor ? 'fill-primary' : 'fill-foreground'}
+        style={{ fontSize: 12, fontWeight: isCreditor ? 600 : 500, fontFamily: 'inherit' }}
+      >
+        {truncated}
+      </text>
+    </g>
+  )
 }
 
 export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
@@ -41,8 +58,6 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
     const [imageCopied, setImageCopied] = useState(false)
 
     if (transactions.length === 0) return null
-
-    const getName = (id: string) => participants.find((p) => p.id === id)?.name ?? 'Unknown'
 
     const debtorIds = [...new Set(transactions.map((t) => t.fromId))]
     const creditorIds = [...new Set(transactions.map((t) => t.toId))]
@@ -70,163 +85,28 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
       creditorIds.map((id, i) => [id, { x: rightX, y: nodeY(i, rightCount) }]),
     )
 
-    const copyImage = async () => {
-      // Resolve CSS variable colors to actual values for the exported image
-      const primaryRaw = resolveCssVar('--primary')
-      const foregroundRaw = resolveCssVar('--foreground')
-      const backgroundRaw = resolveCssVar('--background')
-      const cardRaw = resolveCssVar('--card')
-      const borderRaw = resolveCssVar('--border')
-      const mutedFgRaw = resolveCssVar('--muted-foreground')
-
-      const primary = resolveColor(primaryRaw)
-      const foreground = resolveColor(foregroundRaw)
-      const background = resolveColor(backgroundRaw)
-      const card = resolveColor(cardRaw)
-      const border = resolveColor(borderRaw)
-      const mutedFg = resolveColor(mutedFgRaw)
-
-      // Compute primary/10 equivalent
-      const primaryAlpha = primary.replace('rgb(', 'rgba(').replace(')', ', 0.1)')
-
-      const scale = 2
-      const W = svgWidth * scale
-      const H = svgHeight * scale
-
-      const canvas = document.createElement('canvas')
-      canvas.width = W
-      canvas.height = H
-      const ctx = canvas.getContext('2d')!
-      ctx.scale(scale, scale)
-
-      // Background
-      ctx.fillStyle = background
-      ctx.fillRect(0, 0, svgWidth, svgHeight)
-
-      // Column labels
-      ctx.fillStyle = mutedFg
-      ctx.font = '10px system-ui, sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('PAYS', leftX + NODE_WIDTH / 2, 12)
-      ctx.fillText('RECEIVES', rightX + NODE_WIDTH / 2, 12)
-
-      // Helper: rounded rect
-      const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
-        ctx.beginPath()
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + w - r, y)
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-        ctx.lineTo(x + w, y + h - r)
-        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-        ctx.lineTo(x + r, y + h)
-        ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-        ctx.lineTo(x, y + r)
-        ctx.quadraticCurveTo(x, y, x + r, y)
-        ctx.closePath()
-      }
-
-      // Draw arrows
-      for (const t of transactions) {
-        const from = debtorPositions.get(t.fromId)
-        const to = creditorPositions.get(t.toId)
-        if (!from || !to) continue
-
-        const x1 = from.x + NODE_WIDTH
-        const y1 = from.y + NODE_HEIGHT / 2
-        const x2 = to.x
-        const y2 = to.y + NODE_HEIGHT / 2
-        const cx = (x1 + x2) / 2
-
-        ctx.strokeStyle = primary
-        ctx.lineWidth = 1.5
-        ctx.beginPath()
-        ctx.moveTo(x1, y1)
-        ctx.bezierCurveTo(cx, y1, cx, y2, x2, y2)
-        ctx.stroke()
-
-        // Arrowhead
-        ctx.fillStyle = primary
-        ctx.beginPath()
-        ctx.moveTo(x2, y2)
-        ctx.lineTo(x2 - 8, y2 - 4)
-        ctx.lineTo(x2 - 8, y2 + 4)
-        ctx.closePath()
-        ctx.fill()
-
-        // Amount label
-        const lx = 0.5 * 0.5 * x1 + 2 * 0.5 * 0.5 * cx + 0.5 * 0.5 * x2
-        const ly = 0.5 * 0.5 * y1 + 2 * 0.5 * 0.5 * ((y1 + y2) / 2) + 0.5 * 0.5 * y2
-        const label = `${t.amount.toFixed(2)} ${currencySymbol}`
-        const labelW = 52
-        const labelH = 20
-
-        roundRect(lx - labelW / 2, ly - labelH / 2, labelW, labelH, 4)
-        ctx.fillStyle = card
-        ctx.fill()
-        ctx.strokeStyle = border
-        ctx.lineWidth = 1
-        ctx.stroke()
-
-        ctx.fillStyle = foreground
-        ctx.font = '500 11px system-ui, sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillText(label, lx, ly + 4)
-      }
-
-      // Draw debtor nodes
-      for (const id of debtorIds) {
-        const pos = debtorPositions.get(id)
-        if (!pos) continue
-        roundRect(pos.x, pos.y, NODE_WIDTH, NODE_HEIGHT, NODE_RADIUS)
-        ctx.fillStyle = card
-        ctx.fill()
-        ctx.strokeStyle = border
-        ctx.lineWidth = 1.5
-        ctx.stroke()
-
-        const name = getName(id)
-        const label = name.length > 10 ? name.slice(0, 10) + '…' : name
-        ctx.fillStyle = foreground
-        ctx.font = '500 12px system-ui, sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillText(label, pos.x + NODE_WIDTH / 2, pos.y + NODE_HEIGHT / 2 + 4)
-      }
-
-      // Draw creditor nodes
-      for (const id of creditorIds) {
-        const pos = creditorPositions.get(id)
-        if (!pos) continue
-        roundRect(pos.x, pos.y, NODE_WIDTH, NODE_HEIGHT, NODE_RADIUS)
-        ctx.fillStyle = primaryAlpha
-        ctx.fill()
-        ctx.strokeStyle = primary
-        ctx.lineWidth = 1.5
-        ctx.stroke()
-
-        const name = getName(id)
-        const label = name.length > 10 ? name.slice(0, 10) + '…' : name
-        ctx.fillStyle = primary
-        ctx.font = '600 12px system-ui, sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillText(label, pos.x + NODE_WIDTH / 2, pos.y + NODE_HEIGHT / 2 + 4)
-      }
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) return
-        try {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-          setImageCopied(true)
-          setTimeout(() => setImageCopied(false), 2000)
-        } catch {
-          // Fallback: download the image
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'settlement.png'
-          a.click()
-          URL.revokeObjectURL(url)
-        }
-      }, 'image/png')
+    const copyImage = () => {
+      exportDiagramToCanvas(
+        { svgWidth, svgHeight, nodeWidth: NODE_WIDTH, nodeHeight: NODE_HEIGHT, nodeRadius: NODE_RADIUS, debtorPositions, creditorPositions, debtorIds, creditorIds },
+        transactions,
+        participants,
+        currencySymbol,
+        async (blob) => {
+          if (!blob) return
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+            setImageCopied(true)
+            setTimeout(() => setImageCopied(false), 2000)
+          } catch {
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'settlement.png'
+            a.click()
+            URL.revokeObjectURL(url)
+          }
+        },
+      )
     }
 
     return (
@@ -313,26 +193,13 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
               const pos = debtorPositions.get(id)
               if (!pos) return null
               return (
-                <g key={`d-${id}`}>
-                  <rect
-                    x={pos.x}
-                    y={pos.y}
-                    width={NODE_WIDTH}
-                    height={NODE_HEIGHT}
-                    rx={NODE_RADIUS}
-                    className="fill-card stroke-border"
-                    strokeWidth="1.5"
-                  />
-                  <text
-                    x={pos.x + NODE_WIDTH / 2}
-                    y={pos.y + NODE_HEIGHT / 2 + 4}
-                    textAnchor="middle"
-                    className="fill-foreground"
-                    style={{ fontSize: 12, fontWeight: 500, fontFamily: 'inherit' }}
-                  >
-                    {getName(id).length > 10 ? getName(id).slice(0, 10) + '…' : getName(id)}
-                  </text>
-                </g>
+                <DiagramNode
+                  key={`d-${id}`}
+                  x={pos.x}
+                  y={pos.y}
+                  label={getParticipantName(participants, id)}
+                  variant="debtor"
+                />
               )
             })}
 
@@ -341,26 +208,13 @@ export const FlowDiagram = forwardRef<SVGSVGElement, FlowDiagramProps>(
               const pos = creditorPositions.get(id)
               if (!pos) return null
               return (
-                <g key={`c-${id}`}>
-                  <rect
-                    x={pos.x}
-                    y={pos.y}
-                    width={NODE_WIDTH}
-                    height={NODE_HEIGHT}
-                    rx={NODE_RADIUS}
-                    className="fill-primary/10 stroke-primary"
-                    strokeWidth="1.5"
-                  />
-                  <text
-                    x={pos.x + NODE_WIDTH / 2}
-                    y={pos.y + NODE_HEIGHT / 2 + 4}
-                    textAnchor="middle"
-                    className="fill-primary"
-                    style={{ fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }}
-                  >
-                    {getName(id).length > 10 ? getName(id).slice(0, 10) + '…' : getName(id)}
-                  </text>
-                </g>
+                <DiagramNode
+                  key={`c-${id}`}
+                  x={pos.x}
+                  y={pos.y}
+                  label={getParticipantName(participants, id)}
+                  variant="creditor"
+                />
               )
             })}
 

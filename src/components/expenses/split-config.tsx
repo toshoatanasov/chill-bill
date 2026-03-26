@@ -13,22 +13,12 @@ interface SplitConfigProps {
   onSplitDetailsChange: (details: SplitDetail[]) => void
 }
 
-export function SplitConfig({
-  participants,
-  splitMode,
-  splitAmong,
-  splitDetails,
-  totalAmount,
-  onSplitAmongChange,
-  onSplitDetailsChange,
-}: SplitConfigProps) {
-  const toggleParticipant = (id: string, checked: boolean) => {
-    if (checked) {
-      onSplitAmongChange([...splitAmong, id])
-    } else {
-      onSplitAmongChange(splitAmong.filter((pid) => pid !== id))
-    }
-  }
+function useDetailHelpers(
+  splitDetails: SplitDetail[],
+  onSplitDetailsChange: (details: SplitDetail[]) => void,
+) {
+  const getDetailValue = (id: string): number =>
+    splitDetails.find((d) => d.participantId === id)?.value ?? 0
 
   const updateDetail = (participantId: string, value: number) => {
     const existing = splitDetails.find((d) => d.participantId === participantId)
@@ -41,79 +31,109 @@ export function SplitConfig({
     }
   }
 
-  const getDetailValue = (id: string): number => {
-    return splitDetails.find((d) => d.participantId === id)?.value ?? 0
+  return { getDetailValue, updateDetail }
+}
+
+interface EqualSplitProps {
+  participants: Participant[]
+  splitAmong: string[]
+  totalAmount: number
+  onSplitAmongChange: (ids: string[]) => void
+}
+
+function EqualSplit({ participants, splitAmong, totalAmount, onSplitAmongChange }: EqualSplitProps) {
+  const toggleParticipant = (id: string, checked: boolean) => {
+    if (checked) {
+      onSplitAmongChange([...splitAmong, id])
+    } else {
+      onSplitAmongChange(splitAmong.filter((pid) => pid !== id))
+    }
   }
 
-  if (splitMode === 'equal') {
-    return (
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">Split equally among:</p>
       <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">Split equally among:</p>
-        <div className="space-y-2">
-          {participants.map((p) => (
-            <div key={p.id} className="flex items-center gap-2">
-              <Checkbox
-                id={`equal-${p.id}`}
-                checked={splitAmong.includes(p.id)}
-                onCheckedChange={(checked) => toggleParticipant(p.id, !!checked)}
-              />
-              <Label htmlFor={`equal-${p.id}`} className="cursor-pointer font-normal">
-                {p.name}
-              </Label>
-              {splitAmong.includes(p.id) && splitAmong.length > 0 && totalAmount > 0 && (
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {(totalAmount / splitAmong.length).toFixed(2)}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
+        {participants.map((p) => (
+          <div key={p.id} className="flex items-center gap-2">
+            <Checkbox
+              id={`equal-${p.id}`}
+              checked={splitAmong.includes(p.id)}
+              onCheckedChange={(checked) => toggleParticipant(p.id, !!checked)}
+            />
+            <Label htmlFor={`equal-${p.id}`} className="cursor-pointer font-normal">
+              {p.name}
+            </Label>
+            {splitAmong.includes(p.id) && splitAmong.length > 0 && totalAmount > 0 && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                {(totalAmount / splitAmong.length).toFixed(2)}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
-  if (splitMode === 'percentage') {
-    const total = splitDetails.reduce((s, d) => s + d.value, 0)
-    const remaining = Math.round((100 - total) * 100) / 100
+interface PercentageSplitProps {
+  participants: Participant[]
+  splitDetails: SplitDetail[]
+  totalAmount: number
+  onSplitDetailsChange: (details: SplitDetail[]) => void
+}
 
-    return (
+function PercentageSplit({ participants, splitDetails, totalAmount, onSplitDetailsChange }: PercentageSplitProps) {
+  const { getDetailValue, updateDetail } = useDetailHelpers(splitDetails, onSplitDetailsChange)
+  const total = splitDetails.reduce((s, d) => s + d.value, 0)
+  const remaining = Math.round((100 - total) * 100) / 100
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">Enter percentages (must total 100%):</p>
+        <span
+          className={`text-xs font-medium ${Math.abs(remaining) < 0.01 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}
+        >
+          {remaining === 0 ? '✓ 100%' : `Remaining: ${remaining.toFixed(1)}%`}
+        </span>
+      </div>
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Enter percentages (must total 100%):</p>
-          <span
-            className={`text-xs font-medium ${Math.abs(remaining) < 0.01 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}
-          >
-            {remaining === 0 ? '✓ 100%' : `Remaining: ${remaining.toFixed(1)}%`}
-          </span>
-        </div>
-        <div className="space-y-2">
-          {participants.map((p) => (
-            <div key={p.id} className="flex items-center gap-2">
-              <span className="w-24 truncate text-sm">{p.name}</span>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={getDetailValue(p.id) || ''}
-                onChange={(e) => updateDetail(p.id, parseFloat(e.target.value) || 0)}
-                placeholder="0"
-                className="w-20"
-              />
-              <span className="text-sm text-muted-foreground">%</span>
-              {totalAmount > 0 && getDetailValue(p.id) > 0 && (
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {((totalAmount * getDetailValue(p.id)) / 100).toFixed(2)}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
+        {participants.map((p) => (
+          <div key={p.id} className="flex items-center gap-2">
+            <span className="w-24 truncate text-sm">{p.name}</span>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              value={getDetailValue(p.id) || ''}
+              onChange={(e) => updateDetail(p.id, parseFloat(e.target.value) || 0)}
+              placeholder="0"
+              className="w-20"
+            />
+            <span className="text-sm text-muted-foreground">%</span>
+            {totalAmount > 0 && getDetailValue(p.id) > 0 && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                {((totalAmount * getDetailValue(p.id)) / 100).toFixed(2)}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
-  // exact mode
+interface ExactSplitProps {
+  participants: Participant[]
+  splitDetails: SplitDetail[]
+  totalAmount: number
+  onSplitDetailsChange: (details: SplitDetail[]) => void
+}
+
+function ExactSplit({ participants, splitDetails, totalAmount, onSplitDetailsChange }: ExactSplitProps) {
+  const { getDetailValue, updateDetail } = useDetailHelpers(splitDetails, onSplitDetailsChange)
   const exactTotal = splitDetails.reduce((s, d) => s + d.value, 0)
   const exactRemaining = Math.round((totalAmount - exactTotal) * 100) / 100
 
@@ -147,4 +167,44 @@ export function SplitConfig({
       </div>
     </div>
   )
+}
+
+export function SplitConfig({
+  participants,
+  splitMode,
+  splitAmong,
+  splitDetails,
+  totalAmount,
+  onSplitAmongChange,
+  onSplitDetailsChange,
+}: SplitConfigProps) {
+  switch (splitMode) {
+    case 'equal':
+      return (
+        <EqualSplit
+          participants={participants}
+          splitAmong={splitAmong}
+          totalAmount={totalAmount}
+          onSplitAmongChange={onSplitAmongChange}
+        />
+      )
+    case 'percentage':
+      return (
+        <PercentageSplit
+          participants={participants}
+          splitDetails={splitDetails}
+          totalAmount={totalAmount}
+          onSplitDetailsChange={onSplitDetailsChange}
+        />
+      )
+    case 'exact':
+      return (
+        <ExactSplit
+          participants={participants}
+          splitDetails={splitDetails}
+          totalAmount={totalAmount}
+          onSplitDetailsChange={onSplitDetailsChange}
+        />
+      )
+  }
 }

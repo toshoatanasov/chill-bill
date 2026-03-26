@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { ExpenseForm } from './expense-form'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getParticipantName } from '@/lib/utils'
 import type { AppAction, AppState, Expense } from '@/types'
 
 interface ExpenseListProps {
@@ -19,9 +19,6 @@ const MODE_LABELS = { equal: 'Equal', percentage: 'Percentage', exact: 'Exact' }
 export function ExpenseList({ state, dispatch }: ExpenseListProps) {
   const { expenses, participants, currencySymbol } = state
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
-
-  const getParticipantName = (id: string) =>
-    participants.find((p) => p.id === id)?.name ?? 'Unknown'
 
   const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0)
 
@@ -57,7 +54,7 @@ export function ExpenseList({ state, dispatch }: ExpenseListProps) {
                     </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Paid by {getParticipantName(expense.paidById)} · Split among{' '}
+                    Paid by {getParticipantName(participants, expense.paidById)} · Split among{' '}
                     {expense.splitAmong.length} person{expense.splitAmong.length !== 1 ? 's' : ''}
                   </div>
                 </div>

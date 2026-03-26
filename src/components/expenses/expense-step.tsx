@@ -39,14 +39,14 @@ export function ExpenseStep({ state, dispatch }: ExpenseStepProps) {
         <Button
           variant="outline"
           className="flex-1"
-          onClick={() => dispatch({ type: 'SET_STEP', step: 0 })}
+          onClick={() => dispatch({ type: 'SET_STEP', step: 'participants' })}
         >
           Back
         </Button>
         <Button
           className="flex-1"
           disabled={state.expenses.length === 0}
-          onClick={() => dispatch({ type: 'SET_STEP', step: 2 })}
+          onClick={() => dispatch({ type: 'SET_STEP', step: 'settlement' })}
         >
           Calculate Settlement
         </Button>

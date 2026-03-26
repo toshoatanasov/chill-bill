@@ -22,7 +22,7 @@ function makeState(overrides: Partial<AppState> = {}): AppState {
       },
     ],
     currencySymbol: '€',
-    currentStep: 1,
+    currentStep: 'expenses',
     ...overrides,
   }
 }

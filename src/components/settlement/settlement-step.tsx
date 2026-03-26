@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { BarChart3, Check, ClipboardCopy, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator'
 import { FlowDiagram } from './flow-diagram'
 import { TransactionList } from './transaction-list'
 import { computeSettlement } from '@/lib/settlement'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getParticipantName } from '@/lib/utils'
 import type { AppAction, AppState } from '@/types'
 
 interface SettlementStepProps {
@@ -28,13 +28,14 @@ export function SettlementStep({ state, dispatch }: SettlementStepProps) {
   const [textCopied, setTextCopied] = useState(false)
   const flowDiagramRef = useRef<SVGSVGElement>(null)
 
-  const transactions = computeSettlement(participants, expenses)
+  const transactions = useMemo(
+    () => computeSettlement(participants, expenses),
+    [participants, expenses],
+  )
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
 
-  const getName = (id: string) => participants.find((p) => p.id === id)?.name ?? 'Unknown'
-
   const textSummary = transactions
-    .map((t) => `${getName(t.fromId)} → ${getName(t.toId)}: ${formatCurrency(t.amount, currencySymbol)}`)
+    .map((t) => `${getParticipantName(participants, t.fromId)} → ${getParticipantName(participants, t.toId)}: ${formatCurrency(t.amount, currencySymbol)}`)
     .join('\n')
 
   const copyText = async () => {
@@ -143,7 +144,7 @@ export function SettlementStep({ state, dispatch }: SettlementStepProps) {
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => dispatch({ type: 'SET_STEP', step: 1 })}
+            onClick={() => dispatch({ type: 'SET_STEP', step: 'expenses' })}
           >
             Back
           </Button>
