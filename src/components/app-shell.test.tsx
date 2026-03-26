@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AppShell } from './app-shell'
-import type { AppState } from '@/types'
+import type { AppState, Step } from '@/types'
 
-// Mock useAppState to control what step is rendered
-vi.mock('@/hooks/use-app-state', () => ({
-  useAppState: vi.fn(),
+// Mock useAppStateContext to control what step is rendered
+vi.mock('@/context/app-state-context', () => ({
+  useAppStateContext: vi.fn(),
 }))
 
 // Mock useTheme so ThemeToggle works without a real ThemeProvider
@@ -17,9 +17,9 @@ vi.mock('@/hooks/use-theme', () => ({
   })),
 }))
 
-import { useAppState } from '@/hooks/use-app-state'
+import { useAppStateContext } from '@/context/app-state-context'
 
-function setupState(currentStep: number) {
+function setupState(currentStep: Step) {
   const state: AppState = {
     participants: [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }],
     expenses: [{
@@ -29,7 +29,7 @@ function setupState(currentStep: number) {
     currencySymbol: '€',
     currentStep,
   }
-  vi.mocked(useAppState).mockReturnValue({ state, dispatch: vi.fn() })
+  vi.mocked(useAppStateContext).mockReturnValue({ state, dispatch: vi.fn() })
 }
 
 describe('AppShell', () => {
@@ -51,42 +51,42 @@ describe('AppShell', () => {
 
   describe('header', () => {
     it('renders "Chill Bill" in header', () => {
-      setupState(0)
+      setupState('participants')
       render(<AppShell />)
       expect(screen.getByText('Chill Bill')).toBeInTheDocument()
     })
 
     it('renders theme toggle button', () => {
-      setupState(0)
+      setupState('participants')
       render(<AppShell />)
       expect(screen.getByRole('button', { name: /theme/i })).toBeInTheDocument()
     })
   })
 
   describe('step routing', () => {
-    it('renders ParticipantStep when currentStep is 0', () => {
-      setupState(0)
+    it('renders ParticipantStep when currentStep is participants', () => {
+      setupState('participants')
       render(<AppShell />)
       // ParticipantStep has a unique "Next: Add Expenses" button
       expect(screen.getByRole('button', { name: /next: add expenses/i })).toBeInTheDocument()
     })
 
-    it('renders ExpenseStep when currentStep is 1', () => {
-      setupState(1)
+    it('renders ExpenseStep when currentStep is expenses', () => {
+      setupState('expenses')
       render(<AppShell />)
       // ExpenseStep has a unique "Calculate Settlement" button
       expect(screen.getByRole('button', { name: /calculate settlement/i })).toBeInTheDocument()
     })
 
-    it('renders SettlementStep when currentStep is 2', () => {
-      setupState(2)
+    it('renders SettlementStep when currentStep is settlement', () => {
+      setupState('settlement')
       render(<AppShell />)
       // SettlementStep has a unique "Start New" button
       expect(screen.getByRole('button', { name: /start new/i })).toBeInTheDocument()
     })
 
-    it('does not render ExpenseStep when currentStep is 0', () => {
-      setupState(0)
+    it('does not render ExpenseStep when currentStep is participants', () => {
+      setupState('participants')
       render(<AppShell />)
       expect(screen.queryByRole('button', { name: /calculate settlement/i })).not.toBeInTheDocument()
     })
@@ -94,7 +94,7 @@ describe('AppShell', () => {
 
   describe('StepIndicator', () => {
     it('renders StepIndicator step numbers', () => {
-      setupState(0)
+      setupState('participants')
       render(<AppShell />)
       // Numbers 1 and 2 also appear in ParticipantList index badges, so use getAllByText
       expect(screen.getAllByText('1').length).toBeGreaterThan(0)

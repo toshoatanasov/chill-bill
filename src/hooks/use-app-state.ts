@@ -6,7 +6,7 @@ const DEFAULT_STATE: AppState = {
   participants: [],
   expenses: [],
   currencySymbol: '€',
-  currentStep: 0,
+  currentStep: 'participants',
 }
 
 function appReducer(state: AppState, action: AppAction): AppState {

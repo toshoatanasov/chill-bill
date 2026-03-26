@@ -1,14 +1,14 @@
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { useAppStateContext } from '@/context/app-state-context'
 import { ThemeToggle } from './theme-toggle'
 import { StepIndicator } from './step-indicator'
 import { ParticipantStep } from './participants/participant-step'
 import { ExpenseStep } from './expenses/expense-step'
 import { SettlementStep } from './settlement/settlement-step'
 import { ChillBillLogo } from './logo'
-import { useAppState } from '@/hooks/use-app-state'
 
 export function AppShell() {
-  const { state, dispatch } = useAppState()
+  const { state, dispatch } = useAppStateContext()
 
   return (
     <TooltipProvider>
@@ -29,13 +29,13 @@ export function AppShell() {
         <main className="mx-auto max-w-2xl px-4 py-8 space-y-8">
           <StepIndicator currentStep={state.currentStep} />
 
-          {state.currentStep === 0 && (
+          {state.currentStep === 'participants' && (
             <ParticipantStep state={state} dispatch={dispatch} />
           )}
-          {state.currentStep === 1 && (
+          {state.currentStep === 'expenses' && (
             <ExpenseStep state={state} dispatch={dispatch} />
           )}
-          {state.currentStep === 2 && (
+          {state.currentStep === 'settlement' && (
             <SettlementStep state={state} dispatch={dispatch} />
           )}
         </main>

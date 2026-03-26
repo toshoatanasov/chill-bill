@@ -12,7 +12,7 @@ function makeState(expenseCount = 0): AppState {
       paidById: 'p1', splitMode: 'equal' as const, splitAmong: ['p1', 'p2'], splitDetails: [],
     })),
     currencySymbol: '€',
-    currentStep: 1,
+    currentStep: 'expenses',
   }
 }
 
@@ -43,20 +43,20 @@ describe('ExpenseStep', () => {
   })
 
   describe('navigation', () => {
-    it('dispatches SET_STEP 0 on Back click', async () => {
+    it('dispatches SET_STEP participants on Back click', async () => {
       const user = userEvent.setup()
       const dispatch = vi.fn<(a: AppAction) => void>()
       render(<ExpenseStep state={makeState()} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /back/i }))
-      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 0 })
+      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 'participants' })
     })
 
-    it('dispatches SET_STEP 2 on Calculate Settlement click', async () => {
+    it('dispatches SET_STEP settlement on Calculate Settlement click', async () => {
       const user = userEvent.setup()
       const dispatch = vi.fn<(a: AppAction) => void>()
       render(<ExpenseStep state={makeState(1)} dispatch={dispatch} />)
       await user.click(screen.getByRole('button', { name: /calculate settlement/i }))
-      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 2 })
+      expect(dispatch).toHaveBeenCalledWith({ type: 'SET_STEP', step: 'settlement' })
     })
   })
 })
