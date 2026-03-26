@@ -34,8 +34,23 @@ describe('loadState', () => {
     expect(loadState()).toBeNull()
   })
 
-  it('returns null when currentStep is a number (legacy format)', () => {
+  it('migrates legacy numeric currentStep 0 to "participants"', () => {
     localStorage.setItem('bill-split-state', JSON.stringify({ ...mockState, currentStep: 0 }))
+    expect(loadState()?.currentStep).toBe('participants')
+  })
+
+  it('migrates legacy numeric currentStep 1 to "expenses"', () => {
+    localStorage.setItem('bill-split-state', JSON.stringify({ ...mockState, currentStep: 1 }))
+    expect(loadState()?.currentStep).toBe('expenses')
+  })
+
+  it('migrates legacy numeric currentStep 2 to "settlement"', () => {
+    localStorage.setItem('bill-split-state', JSON.stringify({ ...mockState, currentStep: 2 }))
+    expect(loadState()?.currentStep).toBe('settlement')
+  })
+
+  it('returns null when currentStep is an unrecognized number', () => {
+    localStorage.setItem('bill-split-state', JSON.stringify({ ...mockState, currentStep: 99 }))
     expect(loadState()).toBeNull()
   })
 })

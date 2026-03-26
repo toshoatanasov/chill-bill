@@ -27,7 +27,7 @@ export function resolveCssVar(varName: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
 }
 
-/** Convert oklch(...) or any color to hex via canvas */
+/** Convert oklch(...) or any CSS color to rgb() via canvas */
 export function resolveColor(cssColor: string): string {
   try {
     const canvas = document.createElement('canvas')
